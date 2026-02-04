@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Jarvis Chatbot
 
-## Getting Started
+## Overview
 
-First, run the development server:
+A conversational AI chatbot inspired by Jarvis, designed to assist users with intelligent responses and task automation. Built with Next.js for modern web integration.
+
+## Features
+
+- Natural language processing
+- Context-aware responses
+- Multi-turn conversations
+- Easy Next.js integration
+- Server-side and client-side support
+
+## Installation
 
 ```bash
-npm run dev
+npm install
 # or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+yarn install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Usage
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```javascript
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
+import { ENV } from "./env";
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+const ai = new GoogleGenAI({ apiKey: ENV.GEMINI_API_KEY });
 
-## Learn More
+export const LLM = ai.chats.create({
+  model: ENV.GEMINI_MODEL,
+  history: [],
+  config: {
+    systemInstruction: ENV.GEMINI_SYSTEM_PROMPT,
+    thinkingConfig: {
+      thinkingLevel: ThinkingLevel.LOW,
+    },
+  },
+});
 
-To learn more about Next.js, take a look at the following resources:
+import { LLM } from "@/lib/gemini";
+import { NextRequest, NextResponse } from "next/server";
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+export async function POST(request: NextRequest) {
+  try {
+    const { prompt } = (await request.json()) as { prompt: string };
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+    if (!prompt?.trim()) {
+      return NextResponse.json(
+        { success: false, message: "Please give ma an prompt!" },
+        { status: 400 },
+      );
+    }
 
-## Deploy on Vercel
+    const data = await LLM.sendMessage({ message: prompt });
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+    return NextResponse.json(
+      { success: true, message: "AI gen successfuly!", data: { role: "model", text: data.text } },
+      { status: 200 },
+    );
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, message: "Internal server error", error },
+      { status: 500 },
+    );
+  }
+}
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Requirements
+
+- Node.js 16+
+- Next.js 12+
+- See `package.json` for dependencies
+
+## Contributing
+
+Pull requests are welcome. Please open an issue first to discuss changes.
+
+## License
+
+MIT License
+
+## Author
+
+Arijit
